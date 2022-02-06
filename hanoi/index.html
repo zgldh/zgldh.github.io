@@ -206,7 +206,19 @@
                     drawCursor();
                 }
             });
+            this.input.keyboard.on('keydown-PAGE_UP', function () {
+                if (!win) {
+                    cursorPosition = getCursorPosition(cursorPosition - 1);
+                    drawCursor();
+                }
+            });
             this.input.keyboard.on('keydown-O', function () {
+                if (!win) {
+                    cursorPosition = getCursorPosition(cursorPosition + 1);
+                    drawCursor();
+                }
+            });
+            this.input.keyboard.on('keydown-PAGE_DOWN', function () {
                 if (!win) {
                     cursorPosition = getCursorPosition(cursorPosition + 1);
                     drawCursor();
@@ -220,7 +232,23 @@
                     }
                 }
             });
+            this.input.keyboard.on('keydown-LEFT', function () {
+                if (!win) {
+                    onKeyboardMoveTo(cursorPosition - 1);
+                    if (isWin()) {
+                        showWinSense();
+                    }
+                }
+            });
             this.input.keyboard.on('keydown-L', function () {
+                if (!win) {
+                    onKeyboardMoveTo(cursorPosition + 1);
+                    if (isWin()) {
+                        showWinSense();
+                    }
+                }
+            });
+            this.input.keyboard.on('keydown-RIGHT', function () {
                 if (!win) {
                     onKeyboardMoveTo(cursorPosition + 1);
                     if (isWin()) {
