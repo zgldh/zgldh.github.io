@@ -1,11 +1,249 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser-arcade-physics.min.js"></script> 
-</head>
-<body>
 
-    <script></script>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser-arcade-physics.min.js"></script>
+</head>
+
+<body>
+    <div>层数：<input id="layers" value="9" type="number" /></div>
+
+    <script>
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            autoCenter: true,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 200 }
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+        var game = new Phaser.Game(config);
+        var towerHight = getLayerNumber();
+        var started = false;
+        var win = false;
+        var moves = 0;
+        var timeSeconds = 0;
+        var movesText = null;
+        var timeSecondsText = null;
+        var winText = null;
+
+        var columnColor = 0x888888;
+        var cursorColor = '#ff6666';
+        var textColor = '#ddd';
+        var columns = [
+            [],
+            [],
+            []
+        ];
+        var cursorPosition = 0;
+        var cursorText = null;
+        var colorSpectrum = Phaser.Display.Color.ColorSpectrum(towerHight);
+        var padHeight = 20;
+        var padPadding = 1;
+
+        function getLayerNumber(){
+            return parseInt(document.getElementById('layers').value);
+        }
+
+        function preload() {
+        }
+
+        function createPad(column, size) {
+            var pad = {};
+        }
+
+        function drawPads() {
+            for (var i = 0; i < columns.length; i++) {
+                for (var j = 0; j < columns[i].length; j++) {
+                    var pad = columns[i][j];
+                    if (pad) {
+                        pad.x = 200 + (200 * i);
+                        pad.y = (500 - 2 - padHeight / 2) + padPadding - padPadding - ((padHeight + padPadding) * j);
+                    }
+                }
+            }
+        }
+
+        function drawCursor() {
+            cursorText.x = 200 + (200 * cursorPosition) - 14;
+        }
+
+        function makePadColor(size) {
+            var colorObj = colorSpectrum[size % towerHight];
+            return Phaser.Display.Color.GetColor(colorObj.r, colorObj.g, colorObj.b);
+        }
+
+        function getCursorPosition(position) {
+            return position >= 0 ? position % 3 : 2;
+        }
+
+        function getPad(columnIndex) {
+            var pad = columns[columnIndex][columns[columnIndex].length - 1];
+            return pad;
+        }
+
+        function movePad(fromColumnIndex, toColumnIndex) {
+            columns[toColumnIndex].push(columns[fromColumnIndex].pop());
+            drawPads();
+        }
+
+        function isWin() {
+            win = columns[2].length == towerHight;
+            return win;
+        }
+
+        function onKeyboardMoveTo(moveToColumnIndex) {
+            var targetCursorPosition = getCursorPosition(moveToColumnIndex);
+            var currentPad = getPad(cursorPosition);
+            var targetPad = getPad(targetCursorPosition);
+            if (currentPad) {
+                if (targetPad) {
+                    if (currentPad.width < targetPad.width) {
+                        movePad(cursorPosition, targetCursorPosition);
+                        cursorPosition = targetCursorPosition;
+                        drawCursor();
+                        started = true;
+                        moves++;
+                        movesText.setText("步数: " + moves);
+                    } else {
+                        // don't move
+                    }
+                } else {
+                    // dont have left pad, just move.
+                    movePad(cursorPosition, targetCursorPosition);
+                    cursorPosition = targetCursorPosition;
+                    drawCursor();
+                    started = true;
+                    moves++;
+                    movesText.setText("步数: " + moves);
+                }
+            }
+        }
+
+        /**
+         * @param sense https://photonstorm.github.io/phaser3-docs/Phaser.Scene.html#toc0__anchor
+         **/
+        function resetSense(sense) {
+            started = false;
+            win = false;
+            moves = 0;
+            timeSeconds = 0;
+            cursorPosition = 0;
+            movesText.setText("步数: " + moves);
+            timeSecondsText.setText("用时: " + timeSeconds);
+            winText.visible = false;
+
+            towerHight = getLayerNumber();
+
+            // destroy old pads
+            for (var i = 0; i < columns.length; i++) {
+                for (var j = 0; j < columns[i].length; j++) {
+                    var pad = columns[i][j];
+                    if (pad) {
+                        pad.destroy();
+                    }
+                }
+                columns[i] = [];
+            }
+            // recreate pads
+            var padWidthDelta = 100 / (towerHight + 1);
+            for (var i = 0; i < towerHight; i++) {
+                var width = 100 - (i * padWidthDelta);
+                var pad = sense.add.rectangle(-1000, -1000, width, padHeight, makePadColor(i));
+                columns[0].push(pad);
+            }
+
+            // cursor
+            drawCursor();
+        }
+
+        function showWinSense() {
+            started = false;
+            winText.visible = true;
+            cursorText.x = -1000;
+        }
+
+        function create() {
+            // Text
+            this.add.text(24, 24, 'Hanoi Tower', { fontSize: '32px', fill: textColor });
+            this.add.text(24,540, '`U` 和 `O` 移动光标， `J` 和 `L` 把光标下的盘子向左右移动，`R` 重新开始。', { fontSize: '16px', fill: textColor });
+            movesText = this.add.text(24, 570, '步数: ' + moves, { fontSize: '16px', fill: textColor });
+            timeSecondsText = this.add.text(650, 570, '用时: ' + timeSeconds, { fontSize: '16px', fill: textColor });
+            winText = this.add.text(290, 120, '你赢了！\n按 `R` 重新开始', { fontSize: '32px', fill: '#ff0000', align: 'center' });
+            winText.visible = false;
+
+            // Background
+            this.add.rectangle(400, 500, 800, 2, columnColor); // ground
+            this.add.rectangle(200, 350, 10, 300, columnColor); // column 1
+            this.add.rectangle(400, 350, 10, 300, columnColor); // column 2
+            this.add.rectangle(600, 350, 10, 300, columnColor); // column 3
+
+            // Cursor
+            cursorText = this.add.text(-100, 100, '▼', { fontSize: '48px', fill: cursorColor, align: 'center' });
+
+            // Pads
+            resetSense(this)
+
+            drawPads();
+
+            // Keydown events
+            this.input.keyboard.on('keydown-R', function () {
+                resetSense(this);
+                drawPads();
+            }, this);
+            this.input.keyboard.on('keydown-U', function () {
+                if (!win) {
+                    cursorPosition = getCursorPosition(cursorPosition - 1);
+                    drawCursor();
+                }
+            });
+            this.input.keyboard.on('keydown-O', function () {
+                if (!win) {
+                    cursorPosition = getCursorPosition(cursorPosition + 1);
+                    drawCursor();
+                }
+            });
+            this.input.keyboard.on('keydown-J', function () {
+                if (!win) {
+                    onKeyboardMoveTo(cursorPosition - 1);
+                    if (isWin()) {
+                        showWinSense();
+                    }
+                }
+            });
+            this.input.keyboard.on('keydown-L', function () {
+                if (!win) {
+                    onKeyboardMoveTo(cursorPosition + 1);
+                    if (isWin()) {
+                        showWinSense();
+                    }
+                }
+            });
+        }
+
+        function update(time, delta) {
+            // var cursors = this.input.keyboard.createCursorKeys();
+
+            if (started) {
+                timeSeconds += delta;
+                timeSecondsText.setText("用时: " + Math.floor(timeSeconds / 10)/100);
+            }
+
+            // if(this.input.keyboard.checkDown(''))
+
+            // console.log('cursors ',cursors);
+        }
+    </script>
 
 </body>
+
 </html>
