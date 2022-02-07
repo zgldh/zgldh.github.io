@@ -204,7 +204,8 @@
             var sense = this;
             // Text
             sense.add.text(24, 24, 'Hanoi Tower', { fontSize: '32px', fill: textColor });
-            sense.add.text(24, screenHeight - 60, '`U` 和 `O` 移动光标， `J` 和 `L` 把光标下的盘子向左右移动，`R` 重新开始。', { fontSize: '16px', fill: textColor });
+            sense.add.text(24, screenHeight - 80, '`U` 和 `O` 移动光标， `J` 和 `L` 把光标下的盘子向左右移动，`R` 重新开始。', { fontSize: '16px', fill: textColor });
+            sense.add.text(24, screenHeight - 60, '也可拖拽盘子', { fontSize: '16px', fill: textColor });
             movesText = sense.add.text(24, screenHeight - 30, '步数: ' + moves, { fontSize: '16px', fill: textColor });
             timeSecondsText = sense.add.text(650, screenHeight - 30, '用时: ' + timeSeconds, { fontSize: '16px', fill: textColor });
             winText = sense.add.text(290, 120, '你赢了！\n按 `R` 重新开始', { fontSize: '32px', fill: '#ff0000', align: 'center' });
