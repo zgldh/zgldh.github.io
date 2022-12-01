@@ -3,7 +3,7 @@
     "main.css": "/static/css/main.a6181f0b.css",
     "main.js": "/static/js/main.672a090c.js",
     "static/js/787.fb10026c.chunk.js": "/static/js/787.fb10026c.chunk.js",
-    "static/media/16ShipCollection.png": "/static/media/16ShipCollection.eeca4c936b76d6b01ca3.png",
+    "static/media/16ShipCollection.png": "./static/media/16ShipCollection.eeca4c936b76d6b01ca3.png",
     "index.html": "/index.html",
     "main.a6181f0b.css.map": "/static/css/main.a6181f0b.css.map",
     "main.672a090c.js.map": "/static/js/main.672a090c.js.map",
