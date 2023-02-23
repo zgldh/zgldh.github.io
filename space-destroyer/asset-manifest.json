@@ -1,16 +1,17 @@
 {
   "files": {
-    "main.css": "/static/css/main.a6181f0b.css",
-    "main.js": "/static/js/main.672a090c.js",
-    "static/js/787.fb10026c.chunk.js": "/static/js/787.fb10026c.chunk.js",
-    "static/media/16ShipCollection.png": "./static/media/16ShipCollection.eeca4c936b76d6b01ca3.png",
-    "index.html": "/index.html",
-    "main.a6181f0b.css.map": "/static/css/main.a6181f0b.css.map",
-    "main.672a090c.js.map": "/static/js/main.672a090c.js.map",
-    "787.fb10026c.chunk.js.map": "/static/js/787.fb10026c.chunk.js.map"
+    "main.css": "/space-destroyer/static/css/main.f53c6a2e.css",
+    "main.js": "/space-destroyer/static/js/main.5cc0e655.js",
+    "static/js/787.fb10026c.chunk.js": "/space-destroyer/static/js/787.fb10026c.chunk.js",
+    "static/media/16ShipCollection.png": "/space-destroyer/static/media/16ShipCollection.eeca4c936b76d6b01ca3.png",
+    "static/media/M484BulletCollection1.png": "/space-destroyer/static/media/M484BulletCollection1.b5fb646f950e987f55ed.png",
+    "index.html": "/space-destroyer/index.html",
+    "main.f53c6a2e.css.map": "/space-destroyer/static/css/main.f53c6a2e.css.map",
+    "main.5cc0e655.js.map": "/space-destroyer/static/js/main.5cc0e655.js.map",
+    "787.fb10026c.chunk.js.map": "/space-destroyer/static/js/787.fb10026c.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.a6181f0b.css",
-    "static/js/main.672a090c.js"
+    "static/css/main.f53c6a2e.css",
+    "static/js/main.5cc0e655.js"
   ]
 }
