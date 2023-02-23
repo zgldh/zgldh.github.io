@@ -1,17 +1,17 @@
 {
   "files": {
-    "main.css": "/space-destroyer/static/css/main.f53c6a2e.css",
+    "main.css": "/space-destroyer/static/css/main.3a9e02a3.css",
     "main.js": "/space-destroyer/static/js/main.5cc0e655.js",
     "static/js/787.fb10026c.chunk.js": "/space-destroyer/static/js/787.fb10026c.chunk.js",
     "static/media/16ShipCollection.png": "/space-destroyer/static/media/16ShipCollection.eeca4c936b76d6b01ca3.png",
     "static/media/M484BulletCollection1.png": "/space-destroyer/static/media/M484BulletCollection1.b5fb646f950e987f55ed.png",
     "index.html": "/space-destroyer/index.html",
-    "main.f53c6a2e.css.map": "/space-destroyer/static/css/main.f53c6a2e.css.map",
+    "main.3a9e02a3.css.map": "/space-destroyer/static/css/main.3a9e02a3.css.map",
     "main.5cc0e655.js.map": "/space-destroyer/static/js/main.5cc0e655.js.map",
     "787.fb10026c.chunk.js.map": "/space-destroyer/static/js/787.fb10026c.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.f53c6a2e.css",
+    "static/css/main.3a9e02a3.css",
     "static/js/main.5cc0e655.js"
   ]
 }
