@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Piano</title>
+    <link rel="stylesheet" href="./src/style.css">
+</head>
+
+<body>
+    <div class="piano">
+        <div data-key="65" data-note="C4" class="key white"><span class="key-label">A</span></div>
+        <div data-key="87" data-note="C#4" class="key black"><span class="key-label">W</span></div>
+        <div data-key="83" data-note="D4" class="key white"><span class="key-label">S</span></div>
+        <div data-key="69" data-note="D#4" class="key black"><span class="key-label">E</span></div>
+        <div data-key="68" data-note="E4" class="key white"><span class="key-label">D</span></div>
+        <div data-key="70" data-note="F4" class="key white"><span class="key-label">F</span></div>
+        <div data-key="84" data-note="F#4" class="key black"><span class="key-label">T</span></div>
+        <div data-key="71" data-note="G4" class="key white"><span class="key-label">G</span></div>
+        <div data-key="89" data-note="G#4" class="key black"><span class="key-label">Y</span></div>
+        <div data-key="72" data-note="A4" class="key white"><span class="key-label">H</span></div>
+        <div data-key="85" data-note="A#4" class="key black"><span class="key-label">U</span></div>
+        <div data-key="74" data-note="B4" class="key white"><span class="key-label">J</span></div>
+        <div data-key="75" data-note="C5" class="key white"><span class="key-label">K</span></div>
+        <div data-key="79" data-note="C#5" class="key black"><span class="key-label">O</span></div>
+        <div data-key="76" data-note="D5" class="key white"><span class="key-label">L</span></div>
+        <div data-key="80" data-note="D#5" class="key black"><span class="key-label">P</span></div>
+        <div data-key="186" data-note="E5" class="key white"><span class="key-label">;</span></div>
+    </div>
+    <div class="controls">
+        <label for="volume">Volume: </label>
+        <input type="range" id="volume" name="volume" min="0" max="1" step="0.01" value="0.5">
+        <label for="sound">Sound: </label>
+        <select id="sound" name="sound">
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+            <option value="sawtooth">Sawtooth</option>
+        </select>
+        <label for="show-keys">Show Keys: </label>
+        <input type="checkbox" id="show-keys" name="show-keys" checked>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>
