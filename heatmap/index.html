@@ -1,0 +1,167 @@
+<html>
+
+<head>
+  <link href="./hotmap.css" rel="stylesheet">
+  <script src="./hotmap.js"></script>
+
+  <style>
+    /* let's have the body act as container */
+    body {
+      margin: 0;
+    }
+
+    .chart-container {
+      position: absolute;
+      left: 50px;
+      top: 50px;
+      width: 800px;
+      height: 640px;
+    }
+
+    #chart {}
+
+    .hotmap {}
+
+    .hotmap .header {
+      display: none;
+    }
+
+    .hotmap .y-axis-hover-box {
+      display: none;
+    }
+
+    .hotmap .x-axis-hover-box {
+      display: none;
+    }
+
+    .hotmap .select-count {
+      display: none;
+    }
+
+    .hotmap .scale-ctrls {
+      display: none;
+    }
+  </style>
+
+  <title>Hotmap</title>
+</head>
+
+<body>
+  <!--<button class="update-btn">update chart</button>-->
+  <div class="chart-container">
+    <div id="chart"></div>
+  </div>
+  <script>
+    window.onload = function () {
+
+      let currentFps = 10;
+      let width = 256;
+      let height = 208;
+      let scale = 3;
+      var dataCache = []
+      let previousData = [];
+      var totalFrames = 100;
+      let valueMax = 100;
+
+      console.log('Generating data...')
+      for (var i = 0; i < totalFrames; i++) {
+        dataCache.push(generateData())
+      }
+      console.log('All data generated.')
+
+      // Generate data points for the entire 208x256 grid
+      function generateData() {
+        const data = [];
+
+        for (let x = 0; x < height; x++) {
+          let rowData = []
+          for (let y = 0; y < width; y++) {
+            let prevPoint;
+            if (previousData.hasOwnProperty(x) && previousData[x].hasOwnProperty(y)) {
+              prevPoint = previousData[x][y];
+            } else {
+              prevPoint = Math.random() * valueMax;
+            }
+            const value = Math.min(valueMax, Math.max(0, prevPoint + (Math.random() - 0.5) * valueMax)); // Slightly adjust value
+            rowData.push(value);
+
+            if (!previousData.hasOwnProperty(x)) {
+              previousData[x] = {};
+            }
+            previousData[x][y] = value;
+          }
+          data.push(rowData)
+        }
+
+        return data;
+      }
+
+      let ele = document.querySelector('#chart');
+
+      let rows = []
+      let cols = [];
+      for (let i = 0; i < height; i++) {
+        rows.push(
+          {
+            name: "Row " + i,
+            meta: []
+          },);
+      }
+      for (let i = 0; i < width; i++) {
+        cols.push(
+          {
+            name: "Col " + i,
+            meta: []
+          },);
+      }
+      window.hotmap = new Hotmap({
+        ele,
+        rows,
+        cols,
+        matrix: dataCache[0],
+        defaults: {
+          cellWidth: scale,
+          cellHeight: scale,
+          size: {
+            rows: rows.length,
+            columns: cols.length,
+            min: 0,
+            max: valueMax,
+          }
+        },
+        options: {
+          hideLegend: true,
+          hideOptions: true,
+        },
+        onHover: info => {
+          let cs = info.rowMeta;
+          return `<div><b>Value:</b> ${info.value}</div>`;
+        },
+      });
+      var intervalHandleScaleCtrl = setInterval(() => {
+        if (hotmap.scaleCtrl) {
+          hotmap.scaleCtrl.onLockClick();
+          clearInterval(intervalHandleScaleCtrl);
+        }
+      }, 100);
+
+      var frame = 0;
+      var intervalHandle;
+      var init = +new Date;
+      // Animation function
+      function animate() {
+        intervalHandle && clearInterval(intervalHandle);
+        intervalHandle = setInterval(() => {
+          var matrix = dataCache[frame];
+          hotmap.updateMatrix(matrix);
+          console.log('took ', (+new Date) - init, 'ms', 'frame', frame);
+          init = +new Date;
+          frame = (frame + 1) % dataCache.length;
+        }, 1000 / currentFps);
+      }
+      animate()
+    };
+  </script>
+</body>
+
+</html>
