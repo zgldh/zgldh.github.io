@@ -62,37 +62,48 @@
       let previousData = [];
       var totalFrames = 100;
       let valueMax = 100;
+      let neighborSize = 5;
 
       console.log('Generating data...')
       for (var i = 0; i < totalFrames; i++) {
-        dataCache.push(generateData())
+        dataCache.push(generateData(i))
       }
       console.log('All data generated.')
 
-      // Generate data points for the entire 208x256 grid
-      function generateData() {
+      // Generate data points with two expanding circles
+      function generateData(iteration) {
         const data = [];
+        
+        // Define two center points
+        const center1 = {x: height * 0.3, y: width * 0.3};
+        const center2 = {x: height * 0.7, y: width * 0.7};
+        
+        // Calculate current radius and value based on iteration
+        const maxRadius = 80;
+        const minRadius = 20;
+        const radius = Math.min(minRadius + iteration * 0.6, maxRadius);
+        const value = Math.min(iteration, 100);
 
         for (let x = 0; x < height; x++) {
-          let rowData = []
+          let rowData = [];
           for (let y = 0; y < width; y++) {
-            let prevPoint;
-            if (previousData.hasOwnProperty(x) && previousData[x].hasOwnProperty(y)) {
-              prevPoint = previousData[x][y];
-            } else {
-              prevPoint = Math.random() * valueMax;
+            // Calculate distance to both centers
+            const dist1 = Math.sqrt(Math.pow(x - center1.x, 2) + Math.pow(y - center1.y, 2));
+            const dist2 = Math.sqrt(Math.pow(x - center2.x, 2) + Math.pow(y - center2.y, 2));
+            
+            // Calculate value based on distance to centers
+            let cellValue = 0;
+            if (dist1 <= radius) {
+              cellValue = Math.max(cellValue, value * (1 - dist1/radius));
             }
-            const value = Math.min(valueMax, Math.max(0, prevPoint + (Math.random() - 0.5) * valueMax)); // Slightly adjust value
-            rowData.push(value);
-
-            if (!previousData.hasOwnProperty(x)) {
-              previousData[x] = {};
+            if (dist2 <= radius) {
+              cellValue = Math.max(cellValue, value * (1 - dist2/radius));
             }
-            previousData[x][y] = value;
+            
+            rowData.push(cellValue);
           }
-          data.push(rowData)
+          data.push(rowData);
         }
-
         return data;
       }
 
@@ -118,7 +129,7 @@
         ele,
         rows,
         cols,
-        matrix: dataCache[0],
+        matrix: dataCache[99],
         defaults: {
           cellWidth: scale,
           cellHeight: scale,
@@ -127,8 +138,19 @@
             columns: cols.length,
             min: 0,
             max: valueMax,
+          },
+          selection: {
+            stroke: 'rgb(252, 239, 203)',
+            fill: 'rgba(255, 166, 0, 0.6)',
           }
         },
+        color: [
+          [0, 0, 0],
+          [0, 0, 255],
+          [0, 255, 0],
+          [255, 255, 0],
+          [255, 0, 0]
+        ],
         options: {
           hideLegend: true,
           hideOptions: true,
@@ -137,13 +159,17 @@
           let cs = info.rowMeta;
           return `<div><b>Value:</b> ${info.value}</div>`;
         },
+        onSelection: selection => {
+          alert(`Selected ${selection.length} cell(s)\n\n` +
+            JSON.stringify(selection, null, 4).slice(0, 10000));
+        },
       });
-      var intervalHandleScaleCtrl = setInterval(() => {
-        if (hotmap.scaleCtrl) {
-          hotmap.scaleCtrl.onLockClick();
-          clearInterval(intervalHandleScaleCtrl);
-        }
-      }, 100);
+      // var intervalHandleScaleCtrl = setInterval(() => {
+      //   if (hotmap.scaleCtrl) {
+      //     // hotmap.scaleCtrl.onLockClick();
+      //     clearInterval(intervalHandleScaleCtrl);
+      //   }
+      // }, 100);
 
       var frame = 0;
       var intervalHandle;
