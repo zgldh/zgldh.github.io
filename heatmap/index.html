@@ -3,7 +3,6 @@
 <head>
   <link href="./hotmap.css" rel="stylesheet">
   <script src="./hotmap.js"></script>
-
   <style>
     /* let's have the body act as container */
     body {
@@ -79,10 +78,10 @@
         const center2 = { x: height * 0.7, y: width * 0.7 };
 
         // Calculate current radius and value based on iteration
-        const maxRadius = 80;
+        const maxRadius = 160;
         const minRadius = 20;
-        const radius = Math.min(minRadius + iteration * 0.6, maxRadius);
-        const value = Math.min(iteration, 100);
+        const radius = Math.min(minRadius + iteration * 1.5, maxRadius);
+        const value = Math.min(iteration * 1.5, 200);
 
         for (let x = 0; x < height; x++) {
           let rowData = [];
