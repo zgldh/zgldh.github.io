@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单人祖玛游戏</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #gameCanvas {
+            background-color: #000;
+            border: 2px solid #fff;
+        }
+        #gameInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #startScreen {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        #startButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="gameInfo">
+        分数: <span id="score">0</span> | 生命: <span id="lives">10</span>
+    </div>
+    <div id="startScreen">
+        <h1>祖玛游戏</h1>
+        <p>使用鼠标移动瞄准，点击射击</p>
+        <p>阻止敌人到达底部</p>
+        <button id="startButton">开始游戏</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+
+        // 游戏状态
+        let gameRunning = false;
+        let score = 0;
+        let lives = 10;
+        let shootTimer = 0;
+        let shootInterval = 30; // 射击间隔(帧数)
+        
+        // 玩家升级状态
+        const playerUpgrades = {
+            damage: 10,  // 基础伤害10
+            bulletCount: 1, // 子弹数量
+            bulletSpeed: 1, // 子弹速度倍数
+            bulletSize: 1  // 子弹大小倍数
+        };
+        
+        // 道具数组
+        let powerups = [];
+        const powerupRadius = 15;
+        let powerupSpawnTimer = 0;
+        const powerupSpawnInterval = 300; // 每300帧生成一个道具
+        
+        // 玩家设置
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            radius: 30,
+            color: '#3498db',
+            angle: -Math.PI / 2 // 初始向上
+        };
+        
+        // 子弹数组
+        let bullets = [];
+        const bulletSpeed = 10;
+        const bulletRadius = 8;
+        
+        // 敌人数组
+        let enemies = [];
+        const enemyRadius = 20;
+        let enemySpawnTimer = 0;
+        let enemySpawnInterval = 180; // 帧数
+        
+        // 路径点 (敌人移动路径)
+        const pathPoints = [
+            { x: 100, y: 0 },
+            { x: 100, y: 150 },
+            { x: 700, y: 150 },
+            { x: 700, y: 300 },
+            { x: 100, y: 300 },
+            { x: 100, y: 450 },
+            { x: 700, y: 450 },
+            { x: 700, y: 600 } // 到达底部
+        ];
+        
+        // 初始化游戏
+        function initGame() {
+            score = 0;
+            lives = 10;
+            bullets = [];
+            enemies = [];
+            powerups = [];
+            playerUpgrades.damage = 10;
+            playerUpgrades.bulletCount = 1;
+            playerUpgrades.bulletSpeed = 1;
+            playerUpgrades.bulletSize = 1;
+            updateScore();
+            gameRunning = true;
+            startScreen.style.display = 'none';
+            animate();
+        }
+        
+        // 更新分数显示
+        function updateScore() {
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+        }
+        
+        // 绘制玩家
+        function drawPlayer() {
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+            ctx.closePath();
+            
+            // 绘制"嘴巴"指示方向
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y);
+            ctx.lineTo(
+                player.x + Math.cos(player.angle) * player.radius * 1.5,
+                player.y + Math.sin(player.angle) * player.radius * 1.5
+            );
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#e74c3c';
+            ctx.stroke();
+        }
+        
+        // 绘制子弹
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius * playerUpgrades.bulletSize, 0, Math.PI * 2);
+                ctx.fillStyle = bullet.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+        
+        // 绘制敌人
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                ctx.fillStyle = enemy.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+        
+        // 绘制道具
+        function drawPowerups() {
+            powerups.forEach(powerup => {
+                // 绘制方形道具背景和边框
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(powerup.x - powerup.radius, powerup.y - powerup.radius, 
+                            powerup.radius * 2, powerup.radius * 2);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(powerup.x - powerup.radius, powerup.y - powerup.radius, 
+                             powerup.radius * 2, powerup.radius * 2);
+                
+                // 绘制道具图标(不同功能不同颜色)
+                ctx.fillStyle = powerup.color;
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(powerup.symbol, powerup.x, powerup.y);
+            });
+        }
+        
+        // 绘制路径
+        function drawPath() {
+            ctx.beginPath();
+            ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+            
+            for (let i = 1; i < pathPoints.length; i++) {
+                ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
+            }
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 10;
+            ctx.stroke();
+        }
+        
+        // 更新子弹位置
+        function updateBullets() {
+            bullets = bullets.filter(bullet => {
+                // 移动子弹
+                bullet.x += bullet.dx * playerUpgrades.bulletSpeed;
+                bullet.y += bullet.dy * playerUpgrades.bulletSpeed;
+                
+                // 检查是否超出屏幕
+                return bullet.x > 0 && bullet.x < canvas.width &&
+                       bullet.y > 0 && bullet.y < canvas.height;
+            });
+        }
+        
+        // 生成道具
+        function spawnPowerup() {
+            const powerupTypes = [
+                {
+                    type: 'damage',
+                    color: '#ff0000', // 红色D
+                    symbol: 'D',
+                    value: 1
+                },
+                {
+                    type: 'bulletCount', 
+                    color: '#00ff00', // 绿色M
+                    symbol: 'M',
+                    value: 1
+                },
+                {
+                    type: 'bulletSpeed',
+                    color: '#0000ff', // 蓝色S
+                    symbol: 'S',
+                    value: 0.2
+                },
+                {
+                    type: 'bulletSize',
+                    color: '#ffff00', // 黄色B
+                    symbol: 'B',
+                    value: 0.5
+                },
+                {
+                    type: 'health',
+                    color: '#ff69b4', // 粉色H
+                    symbol: 'H',
+                    value: 1
+                },
+                {
+                    type: 'fireRate',
+                    color: '#ffa500', // 橙色F
+                    symbol: 'F',
+                    value: -5
+                }
+            ];
+            
+            const powerupType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+            
+            powerups.push({
+                x: pathPoints[0].x,
+                y: pathPoints[0].y,
+                radius: powerupRadius,
+                color: powerupType.color,
+                pathIndex: 0,
+                speed: 1,
+                type: powerupType.type,
+                value: powerupType.value,
+                symbol: powerupType.symbol
+            });
+        }
+        
+        // 生成敌人
+        function spawnEnemy() {
+            const colors = ['#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 根据颜色和分数设置血量(基础血量+分数加成)
+            let baseHealth;
+            switch(color) {
+                case '#e74c3c': // 红色
+                    baseHealth = 30;
+                    break;
+                case '#2ecc71': // 绿色
+                    baseHealth = 20;
+                    break;
+                case '#f1c40f': // 黄色
+                    baseHealth = 15;
+                    break;
+                case '#9b59b6': // 紫色
+                    baseHealth = 25;
+                    break;
+                case '#1abc9c': // 青色
+                    baseHealth = 10;
+                    break;
+                default:
+                    baseHealth = 15;
+            }
+            // 血量随分数增加(每100分+10血量)
+            const health = baseHealth + Math.floor(score / 10);
+            
+            // 计算速度：基础1 + 分数/100，最高10
+            const speed = Math.min(10, 1 + score / 100);
+            enemies.push({
+                x: pathPoints[0].x,
+                y: pathPoints[0].y,
+                radius: enemyRadius,
+                color: color,
+                pathIndex: 0,
+                speed: speed,
+                health: health,
+                maxHealth: health
+            });
+        }
+        
+        // 更新道具位置
+        function updatePowerups() {
+            powerupSpawnTimer++;
+            if (powerupSpawnTimer >= powerupSpawnInterval) {
+                spawnPowerup();
+                powerupSpawnTimer = 0;
+            }
+            
+            powerups = powerups.filter(powerup => {
+                const targetPoint = pathPoints[powerup.pathIndex + 1] || pathPoints[powerup.pathIndex];
+                const dx = targetPoint.x - powerup.x;
+                const dy = targetPoint.y - powerup.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < powerup.speed) {
+                    powerup.pathIndex++;
+                    if (powerup.pathIndex >= pathPoints.length - 1) {
+                        // 道具到达终点消失
+                        return false;
+                    }
+                } else {
+                    // 向目标点移动
+                    powerup.x += (dx / distance) * powerup.speed;
+                    powerup.y += (dy / distance) * powerup.speed;
+                }
+                
+                return true;
+            });
+        }
+        
+        // 更新敌人位置
+        function updateEnemies() {
+            enemySpawnTimer++;
+            if (enemySpawnTimer >= enemySpawnInterval) {
+                spawnEnemy();
+                enemySpawnTimer = 0;
+                
+                // 随着分数增加，敌人出现得更快(最快30帧)
+                enemySpawnInterval = Math.max(30, 180 - Math.floor(score / 10));
+            }
+            
+            enemies = enemies.filter(enemy => {
+                const targetPoint = pathPoints[enemy.pathIndex + 1] || pathPoints[enemy.pathIndex];
+                const dx = targetPoint.x - enemy.x;
+                const dy = targetPoint.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < enemy.speed) {
+                    enemy.pathIndex++;
+                    if (enemy.pathIndex >= pathPoints.length - 1) {
+                        // 敌人到达终点
+                        lives--;
+                        updateScore();
+                        if (lives <= 0) {
+                            gameOver();
+                        }
+                        return false;
+                    }
+                } else {
+                    // 向目标点移动
+                    enemy.x += (dx / distance) * enemy.speed;
+                    enemy.y += (dy / distance) * enemy.speed;
+                }
+                
+                return true;
+            });
+        }
+        
+        // 伤害数字数组
+        let floatTexts = [];
+        
+        // 显示伤害数字
+        function drawFloatTexts() {
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = floatTexts.length - 1; i >= 0; i--) {
+                const dn = floatTexts[i];
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`${dn.value}`, dn.x, dn.y);
+                dn.y -= 1;
+                dn.lifetime--;
+                
+                if (dn.lifetime <= 0) {
+                    floatTexts.splice(i, 1);
+                }
+            }
+        }
+        
+        // 应用升级效果
+        function applyUpgrade(type, value) {
+            switch(type) {
+                case 'damage':
+                    playerUpgrades.damage = Math.min(20, playerUpgrades.damage + value);
+                    break;
+                case 'bulletCount':
+                    playerUpgrades.bulletCount = Math.min(5, playerUpgrades.bulletCount + value);
+                    break;
+                case 'bulletSpeed':
+                    playerUpgrades.bulletSpeed = Math.min(3, playerUpgrades.bulletSpeed + value);
+                    break;
+                case 'bulletSize':
+                    playerUpgrades.bulletSize = Math.min(5, playerUpgrades.bulletSize + value);
+                    break;
+                case 'health':
+                    lives += value;
+                    updateScore();
+                    break;
+                case 'fireRate':
+                    shootInterval = Math.max(10, shootInterval + value);
+                    break;
+            }
+            
+            // 显示升级信息
+            floatTexts.push({
+                x: player.x,
+                y: player.y - player.radius - 20,
+                value: `${type} +${value}`,
+                lifetime: 60
+            });
+        }
+        
+        // 检测碰撞
+        function checkCollisions() {
+            // 子弹与敌人碰撞
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const bullet = bullets[i];
+                    const enemy = enemies[j];
+                    
+                    const dx = bullet.x - enemy.x;
+                    const dy = bullet.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < (bullet.radius * playerUpgrades.bulletSize) + enemy.radius) {
+                        // 碰撞发生
+                        bullets.splice(i, 1);
+                        
+                        // 扣减血量
+                        enemy.health -= playerUpgrades.damage;
+                        
+                        // 根据剩余血量重新映射颜色
+                        if (enemy.health <= 10) {
+                            enemy.color = '#1abc9c'; // 青色
+                        } else if (enemy.health <= 15) {
+                            enemy.color = '#f1c40f'; // 黄色
+                        } else if (enemy.health <= 20) {
+                            enemy.color = '#2ecc71'; // 绿色
+                        } else if (enemy.health <= 25) {
+                            enemy.color = '#9b59b6'; // 紫色
+                        } else {
+                            enemy.color = '#e74c3c'; // 红色
+                        }
+                        
+                        // 显示伤害数字
+                        floatTexts.push({
+                            x: enemy.x,
+                            y: enemy.y - enemy.radius - 10,
+                            value: playerUpgrades.damage,
+                            lifetime: 30
+                        });
+                        
+                        // 检查敌人是否死亡
+                        if (enemy.health <= 0) {
+                            enemies.splice(j, 1);
+                            score += 10;
+                            updateScore();
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // 子弹与道具碰撞
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = powerups.length - 1; j >= 0; j--) {
+                    const bullet = bullets[i];
+                    const powerup = powerups[j];
+                    
+                    const dx = bullet.x - powerup.x;
+                    const dy = bullet.y - powerup.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < (bullet.radius * playerUpgrades.bulletSize) + powerup.radius) {
+                        // 碰撞发生
+                        bullets.splice(i, 1);
+                        applyUpgrade(powerup.type, powerup.value);
+                        powerups.splice(j, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // 游戏结束
+        function gameOver() {
+            gameRunning = false;
+            startScreen.style.display = 'flex';
+            startScreen.querySelector('h1').textContent = '游戏结束';
+            startScreen.querySelector('p').textContent = `最终分数: ${score}`;
+            startButton.textContent = '再玩一次';
+        }
+        
+        // 游戏循环
+        function animate() {
+            if (!gameRunning) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 自动射击逻辑
+            shootTimer++;
+            if (shootTimer >= shootInterval) {
+                shoot();
+                shootTimer = 0;
+            }
+            
+            drawPath();
+            drawPlayer();
+            updateBullets();
+            drawBullets();
+            updateEnemies();
+            drawEnemies();
+            updatePowerups();
+            drawPowerups();
+            checkCollisions();
+            drawFloatTexts();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 射击函数
+        function shoot() {
+            // 根据子弹数量决定射击模式
+            if (playerUpgrades.bulletCount === 1) {
+                // 单发子弹
+                bullets.push({
+                    x: player.x,
+                    y: player.y,
+                    radius: bulletRadius,
+                    color: '#ffffff',
+                    dx: Math.cos(player.angle) * bulletSpeed,
+                    dy: Math.sin(player.angle) * bulletSpeed
+                });
+            } else {
+                // 多发子弹(扇形散射) 
+                const angleStep = 0.1; // 子弹分散角度
+                const startAngle = player.angle - (angleStep * (playerUpgrades.bulletCount - 1) / 2)
+
+                for (let i = 0; i < playerUpgrades.bulletCount; i++) {
+                    const bulletAngle = startAngle + angleStep * i;
+                    bullets.push({
+                        x: player.x,
+                        y: player.y,
+                        radius: bulletRadius,
+                        color: '#ffffff',
+                        dx: Math.cos(bulletAngle) * bulletSpeed,
+                        dy: Math.sin(bulletAngle) * bulletSpeed
+                    });
+                }
+            }
+        }
+
+        // 事件监听
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+        });
+        
+        startButton.addEventListener('click', initGame);
+        
+        // 初始绘制
+        drawPlayer();
+        drawPath();
+    </script>
+</body>
+</html>
