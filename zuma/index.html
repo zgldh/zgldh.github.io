@@ -375,7 +375,7 @@
                 enemySpawnTimer = 0;
                 
                 // 随着分数增加，敌人出现得更快(最快30帧)
-                enemySpawnInterval = Math.max(30, 180 - Math.floor(score / 3));
+                enemySpawnInterval = Math.max(30, 180 - Math.floor(score / 4));
             }
             
             enemies = enemies.filter(enemy => {
